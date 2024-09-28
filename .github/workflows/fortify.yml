@@ -1,0 +1,77 @@
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '44 12 * * 6'
+  workflow_dispatch:
+  
+  jobs:
+  Solidity-Build-Test:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      # Check out source code
+      - name: Check Out Source Code
+        uses: actions/checkout@v4
+
+      # Setup Node.js environment to use Hardhat
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      # Install dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # Compile Solidity contracts
+      - name: Compile Contracts
+        run: npx hardhat compile
+
+      # Run tests
+      - name: Run Tests
+        run: npx hardhat test
+        
+Fortify-AST-Scan:
+    needs: Solidity-Build-Test
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      # Check out source code
+      - name: Check Out Source Code
+        uses: actions/checkout@v4
+
+      # Setup Java for Fortify utilities
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'temurin'
+
+      # Run Fortify SAST scan
+      - name: Run FoD SAST Scan
+        uses: fortify/github-action@a92347297e02391b857e7015792cd1926a4cd418
+        with:
+          sast-scan: true
+        env:
+          FOD_URL: https://ams.fortify.com
+          FOD_TENANT: ${{secrets.FOD_TENANT}}
+          FOD_USER: ${{secrets.FOD_USER}}
+          FOD_PASSWORD: ${{secrets.FOD_PAT}}
+          
+  
+  
+  
+  
+  
+  
